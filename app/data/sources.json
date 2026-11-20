@@ -1,0 +1,60 @@
+{
+  "sources": [
+    {
+      "id": "psn",
+      "publisher": "Exophase",
+      "title": "Grand Theft Auto VI (PSN) trophy list",
+      "url": "https://www.exophase.com/game/grand-theft-auto-vi-psn/trophies/",
+      "read": "19 Nov 2026",
+      "supports": "Official names, descriptions, grades and hidden flags."
+    },
+    {
+      "id": "psnp",
+      "publisher": "PSNProfiles",
+      "title": "Grand Theft Auto VI trophy list",
+      "url": "https://psnprofiles.com/trophies/43531-grand-theft-auto-vi",
+      "read": "19 Nov 2026",
+      "supports": "Grades, hidden flags and progress targets."
+    },
+    {
+      "id": "psq",
+      "publisher": "Push Square",
+      "title": "GTA 6 Trophy Guide and Roadmap",
+      "url": "https://www.pushsquare.com/guides/gta-6-trophy-guide-and-roadmap",
+      "read": "19 Nov 2026",
+      "supports": "Steps, locations, counts and the roadmap order."
+    },
+    {
+      "id": "gb",
+      "publisher": "GTABase",
+      "title": "GTA 6 Trophy Guide and Achievements List",
+      "url": "https://www.gtabase.com/articles/gta-6/gta-6-achievements-trophies-list-ps5-xbox-series",
+      "read": "19 Nov 2026",
+      "supports": "Steps, counts, missable notes and the roadmap."
+    },
+    {
+      "id": "psq100",
+      "publisher": "Push Square",
+      "title": "GTA 6 100% Completion Checklist",
+      "url": "https://www.pushsquare.com/guides/gta-6-100percent-completion-checklist",
+      "read": "19 Nov 2026",
+      "supports": "100% requirements and chapter cleanup."
+    },
+    {
+      "id": "gb100",
+      "publisher": "GTABase",
+      "title": "GTA 6 100% Completion Guide and Interactive Checklist",
+      "url": "https://www.gtabase.com/articles/gta-6/gta-6-100-completion-guide-interactive-checklist",
+      "read": "19 Nov 2026",
+      "supports": "100% requirements and the counts they use."
+    },
+    {
+      "id": "gbmis",
+      "publisher": "GTABase",
+      "title": "GTA 6 Missions",
+      "url": "https://www.gtabase.com/gta-6/missions/",
+      "read": "19 Nov 2026",
+      "supports": "Chapter and mission names."
+    }
+  ]
+}

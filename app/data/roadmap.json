@@ -1,0 +1,53 @@
+{
+  "stages": [
+    {
+      "n": 1,
+      "title": "First night",
+      "window": "Chapter 1",
+      "hours": "3 to 5 hours",
+      "goal": "Open the story with Gone Fishing, close Chapter 1, and take Cal's fishing challenge before the map widens."
+    },
+    {
+      "n": 2,
+      "title": "Chapters 2 and 3",
+      "window": "Chapters 2 and 3",
+      "hours": "20 to 25 hours",
+      "goal": "Play the middle chapters, bank Breakfast Run and The Cartel Heist, and start laundering marked bills."
+    },
+    {
+      "n": 3,
+      "title": "Chapters 4 and 5",
+      "window": "Chapters 4 and 5",
+      "hours": "20 to 25 hours",
+      "goal": "Run the last two chapters to the final mission, where the story gold and the free roam cleanup both open."
+    },
+    {
+      "n": 4,
+      "title": "Side strands",
+      "window": "Chapter 2 onward",
+      "hours": "20 to 30 hours",
+      "goal": "Finish Andy, Kenton, Billy, Randy, Tyrone and Bret, then add stranger strands until the counter reads eight."
+    },
+    {
+      "n": 5,
+      "title": "Collections and scans",
+      "window": "Any time",
+      "hours": "30 to 40 hours",
+      "goal": "Card sets, WAiNK scans, meditation spots, vehicle scans, the eight garages and ten Scooter Bros registrations."
+    },
+    {
+      "n": 6,
+      "title": "Activities and challenges",
+      "window": "Any time",
+      "hours": "60 to 80 hours",
+      "goal": "Stunts, shooting ranges, drone races, road races, arcade, bowling, and the wanted level and robbery one-offs."
+    },
+    {
+      "n": 7,
+      "title": "100% and platinum",
+      "window": "After the credits",
+      "hours": "40 to 50 hours",
+      "goal": "Clear the rest of the checklist, reach 100 percent for A Long Road, and take the platinum that follows."
+    }
+  ]
+}
