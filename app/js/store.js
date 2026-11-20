@@ -7,9 +7,9 @@ const FILE_NAME = 'leonida-100-progress.json';
 
 function storage() {
   try {
-    const probe = '__leonida_probe__';
-    window.localStorage.setItem(probe, '1');
-    window.localStorage.removeItem(probe);
+    const testKey = '__leonida_test__';
+    window.localStorage.setItem(testKey, '1');
+    window.localStorage.removeItem(testKey);
     return window.localStorage;
   } catch {
     return null;

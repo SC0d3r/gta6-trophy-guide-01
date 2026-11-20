@@ -107,6 +107,7 @@ export function visibleTrophies(model, state) {
   return model.trophies.filter((trophy) => {
     if (state.kind !== 'all' && trophy.kind !== state.kind) return false;
     if (state.grade !== 'all' && trophy.grade !== state.grade) return false;
+    if (state.missable && !model.watchByTrophy.has(trophy.name)) return false;
     if (query !== '' && isShielded(trophy, state)) return false;
     if (query === '') return true;
     return trophy.name.toLowerCase().includes(query) || trophy.description.toLowerCase().includes(query);

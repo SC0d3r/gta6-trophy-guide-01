@@ -47,8 +47,9 @@ export const PRESETS = {
     kind: 'all',
     grade: 'all',
     query: '',
-    select: 'Cunning Stunts',
-    spoiler: true
+    select: 'Positive Mental Attitude',
+    spoiler: true,
+    missable: false
   },
   collect: {
     earned: EARNED_COLLECT,
@@ -57,7 +58,8 @@ export const PRESETS = {
     grade: 'all',
     query: '',
     select: 'You WAiNKer!',
-    spoiler: true
+    spoiler: true,
+    missable: false
   },
   roadmap: {
     earned: EARNED_LEDGER,
@@ -66,7 +68,8 @@ export const PRESETS = {
     grade: 'all',
     query: '',
     select: 'Cunning Stunts',
-    spoiler: true
+    spoiler: true,
+    missable: false
   },
   watch: {
     earned: EARNED_LEDGER,
@@ -74,8 +77,9 @@ export const PRESETS = {
     kind: 'all',
     grade: 'all',
     query: '',
-    select: 'Cunning Stunts',
-    spoiler: false
+    select: 'Positive Mental Attitude',
+    spoiler: false,
+    missable: false
   }
 };
 
@@ -91,6 +95,7 @@ export function applyPreset(name, model, state) {
   state.grade = preset.grade;
   state.q = preset.query;
   state.spoiler = preset.spoiler;
+  state.missable = Boolean(preset.missable);
   const selected = model.byName.get(preset.select);
   state.selected = selected ? selected.id : model.trophies[0] ? model.trophies[0].id : 0;
   state.revealed = 0;

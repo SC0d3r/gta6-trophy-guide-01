@@ -14,8 +14,6 @@ import {
   renderSources
 } from './views.js';
 import { readProgress, writeProgress, parseImport, downloadExport } from './store.js';
-import { applyPreset } from './shots.js';
-import { writeProbe } from './probe.js';
 
 const state = {
   view: 'ledger',
@@ -24,6 +22,7 @@ const state = {
   q: '',
   selected: 0,
   spoiler: true,
+  missable: false,
   earned: new Set(),
   revealed: 0,
   demo: false
@@ -165,6 +164,9 @@ function wire() {
     } else if (act === 'view') {
       state.view = hit.dataset.view;
       render();
+    } else if (act === 'missable') {
+      state.missable = !state.missable;
+      render();
     } else if (act === 'spoiler') {
       state.spoiler = !state.spoiler;
       state.revealed = 0;
@@ -215,7 +217,11 @@ async function boot() {
     return;
   }
   const preset = params.get('shot');
-  const applied = preset ? applyPreset(preset, model, state) : false;
+  let applied = false;
+  if (preset) {
+    const { applyPreset } = await import('./shots.js');
+    applied = applyPreset(preset, model, state);
+  }
   if (!applied) {
     state.earned = new Set(readProgress(model.trophies));
     state.selected = model.trophies.length > 0 ? model.trophies[0].id : 0;
@@ -224,7 +230,6 @@ async function boot() {
   setStatus(state.demo ? 'Demo state, nothing written.' : 'Progress saved in this browser.');
   wire();
   render();
-  if (params.has('probe')) requestAnimationFrame(() => writeProbe(model, state));
 }
 
 boot();

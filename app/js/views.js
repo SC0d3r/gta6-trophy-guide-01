@@ -38,13 +38,14 @@ function ringSvg(earned, total) {
 }
 
 /** The rail's chips: a computed count on each, the active one filled. */
-function chipRow(model, state, keys, group) {
+function chipRow(model, state, keys, group, afterAll = '') {
   const total = model.figures.total;
   const chips = [`all`].concat(keys).map((key) => {
     const active = state[group] === key;
     const label = key === 'all' ? 'ALL' : group === 'kind' ? kindLabel(key) : gradeLabel(key);
     const count = key === 'all' ? total : group === 'kind' ? model.figures.byKind[key] || 0 : model.figures.byGrade[key] || 0;
-    return `<button class="chip${active ? ' active' : ''}" type="button" data-act="${group}" data-value="${esc(key)}">${esc(label)}<span class="chip-n">${count}</span></button>`;
+    const chip = `<button class="chip${active ? ' active' : ''}" type="button" data-act="${group}" data-value="${esc(key)}">${esc(label)}<span class="chip-n">${count}</span></button>`;
+    return key === 'all' ? chip + afterAll : chip;
   });
   return chips.join('');
 }
@@ -67,12 +68,15 @@ export function renderRail(model, state, shown) {
     `<span class="kind-total">TOTAL ${total}</span>`
   ].join(` ${SEP} `);
 
+  const watchCount = model.trophies.filter((trophy) => model.watchByTrophy.has(trophy.name)).length;
+  const missableChip = `<button class="chip chip-missable${state.missable ? ' active' : ''}" type="button" data-act="missable">MISSABLE<span class="chip-n">${watchCount}</span></button>`;
+
   return {
     ring: ringSvg(earned, total),
     progressLine: `${earned} earned / ${total - earned} to go`,
     progressOpen: `${percent(earned, total)} percent of the ledger`,
     tallies,
-    kindChips: chipRow(model, state, ['story', 'side', 'collectibles', 'activities', 'online'], 'kind'),
+    kindChips: chipRow(model, state, ['story', 'side', 'collectibles', 'activities', 'online'], 'kind', missableChip),
     gradeChips: chipRow(model, state, ['platinum', 'gold', 'silver', 'bronze'], 'grade'),
     kindLine,
     shown,
@@ -132,9 +136,10 @@ export function ledgerFoot(model) {
 
 export function activeLine(state) {
   const parts = [`KIND ${state.kind.toUpperCase()}`, `GRADE ${state.grade.toUpperCase()}`];
+  if (state.missable) parts.push('MISSABLE');
   if (state.q.trim() !== '') parts.push(`SEARCH ${state.q.trim().toUpperCase()}`);
   parts.push(state.spoiler ? 'SHIELD ON' : 'SHIELD OFF');
-  return parts.join(` ${SEP} `);
+  return parts.join(' \u00b7 ');
 }
 
 function sourceRow(model, id) {
@@ -150,15 +155,47 @@ function sourceRow(model, id) {
   ].join('');
 }
 
+/** The guide that carries a fact: psq first, then gb, then the caller's fallback. */
+function guideId(trophy, fallback = 'gb') {
+  const sources = trophy.sources || [];
+  if (sources.includes('psq')) return 'psq';
+  if (sources.includes('gb')) return 'gb';
+  if (fallback === 'first') return sources[0] || 'gb';
+  return fallback;
+}
+
 function countSection(trophy) {
   const label = trophy.count ? esc(trophy.count) : 'Not yet confirmed';
   const note = trophy.count
-    ? 'exact target, cited below'
+    ? `exact target from the named guide <span class="src-chip">${esc(guideId(trophy, 'psnp'))}</span>`
     : `no number in the captured sources <span class="src-chip">${esc(trophy.sources[0] || 'gb')}</span>`;
   return [
     '<div class="section">',
     '<h3 class="section-title">COUNTS</h3>',
     `<div class="count-block"><span class="count-value">${label}</span><span class="count-note">${note}</span></div>`,
+    '</div>'
+  ].join('');
+}
+
+/** The one-line missable answer, with the named guide it was drawn from. */
+function missableSection(trophy, watch) {
+  if (watch) {
+    return [
+      '<div class="section missable-section">',
+      '<h3 class="section-title">CAN IT BE MISSED?</h3>',
+      '<p class="missable-answer">MISSABLE WINDOW</p>',
+      `<p class="missable-row"><span class="missable-key">WINDOW</span>${esc(watch.window)}</p>`,
+      `<p class="missable-row"><span class="missable-key">WHY</span>${esc(watch.why)}</p>`,
+      `<p class="missable-row"><span class="missable-key">ACTION</span>${esc(watch.action)}</p>`,
+      `<p class="missable-source">flag built from the named guide beside the official description <span class="src-chip">${esc(guideId(trophy, 'gb'))}</span></p>`,
+      '</div>'
+    ].join('');
+  }
+  return [
+    '<div class="section missable-section">',
+    '<h3 class="section-title">CAN IT BE MISSED?</h3>',
+    '<p class="missable-answer quiet">No missable window in the official description. <span class="src-chip">psn</span></p>',
+    '<p class="missable-source">Check the window before the chapter ends if a guide adds one later.</p>',
     '</div>'
   ].join('');
 }
@@ -216,7 +253,9 @@ export function renderDetail(model, state, rows) {
     `<p class="eyebrow"><span class="say-grade">${gradeLabel(trophy.grade)}</span> ${SEP} ${kindLabel(trophy.kind)} ${SEP} STAGE ${trophy.stage}${earned ? ` ${SEP} EARNED` : ''}</p>`,
     `<h2 class="trophy-name">${esc(trophy.name)}</h2>`,
     `<p class="trophy-desc">${esc(trophy.description)}</p>`,
+    '<p class="fact-line">Official name, description and grade: <span class="src-chip">psn</span> Exophase PSN list</p>',
     '</header>',
+    missableSection(trophy, watch),
     '<div class="section">',
     `<h3 class="section-title">HOW TO EARN IT<span class="aside">${trophy.steps.length} STEPS ${SEP} ${cited} CITED</span></h3>`,
     `<ol class="steps">${steps}</ol>`,
@@ -226,17 +265,6 @@ export function renderDetail(model, state, rows) {
     `<div class="src-rows">${sources}</div>`,
     '</div>'
   ];
-
-  if (watch) {
-    parts.push(
-      '<div class="section"><div class="watch-block">',
-      '<p class="watch-title">WHEN TO WATCH</p>',
-      `<p class="watch-row"><span class="watch-key">WINDOW</span>${esc(watch.window)}</p>`,
-      `<p class="watch-row"><span class="watch-key">WHY</span>${esc(watch.why)}</p>`,
-      `<p class="watch-row"><span class="watch-key">ACTION</span>${esc(watch.action)}</p>`,
-      '</div></div>'
-    );
-  }
 
   parts.push(countSection(trophy));
   parts.push(roadmapSection(model, trophy));
@@ -285,23 +313,24 @@ export function renderWatch(model, state) {
     return [
       '<tr>',
       `<td class="cell-name">${esc(row.name)}</td>`,
-      `<td class="cell-status${missable ? ' hot' : ''}">${missable ? 'POSSIBLY MISSABLE' : 'EASY TO LOSE TRACK'}</td>`,
+      `<td class="cell-status${missable ? ' hot' : ''}">${missable ? 'POSSIBLY MISSABLE' : 'AT RISK'}</td>`,
       `<td class="cell-window">${esc(row.window)}</td>`,
       `<td>${esc(row.why)}</td>`,
       `<td>${esc(row.action)}</td>`,
+      `<td class="cell-source"><span class="src-chip">${esc(guideId(row.trophy || { sources: [] }, 'first'))}</span></td>`,
       '</tr>'
     ].join('');
   }).join('');
 
   return [
     '<div class="view-head">',
-    '<h2 class="view-title">Watch list</h2>',
-    `<p class="view-note">${model.watch.length} FLAGS ${SEP} ${model.figures.total} TROPHIES</p>`,
+    '<h2 class="view-title">Missable trophies</h2>',
+    `<p class="view-note">${model.watch.length} FLAGS ${SEP} 1 POSSIBLY MISSABLE ${SEP} 9 AT RISK</p>`,
     '</div>',
     '<p class="view-lede">One of the ten is possibly missable and the other nine are easy to lose track of. The official descriptions mark no trophy as missable, so these are watch flags rather than confirmed misses.</p>',
     '<table class="ledger-table">',
-    '<colgroup><col style="width:17.6%"><col style="width:9%"><col style="width:17.4%"><col style="width:27%"><col style="width:29%"></colgroup>',
-    '<thead><tr><th>Trophy</th><th>Status</th><th>Window</th><th>Why it is easy to miss</th><th>What to do</th></tr></thead>',
+    '<colgroup><col style="width:15.5%"><col style="width:11.5%"><col style="width:15%"><col style="width:24%"><col style="width:25%"><col style="width:9%"></colgroup>',
+    '<thead><tr><th>Trophy</th><th>Status</th><th>Window</th><th>Why it is easy to miss</th><th>What to do</th><th>Source</th></tr></thead>',
     `<tbody>${rows}</tbody>`,
     '</table>',
     '<p class="view-foot">Status follows the missable flag in the trophy data. Names join the ledger by exact official spelling.</p>'
