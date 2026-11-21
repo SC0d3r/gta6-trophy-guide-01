@@ -1,19 +1,16 @@
 // app.js: boot, state, events. One state object, one render pass, no globals besides these.
 
 import { byId, setText, setHtml } from './dom.js';
-import { loadModel, visibleTrophies } from './data.js';
+import { loadModel, visibleTrophies, ledgerCount } from './data.js';
 import {
   renderAudit,
   renderRail,
   renderLedgerRows,
   ledgerFoot,
   activeLine,
-  renderDetail,
-  renderRoadmap,
-  renderWatch,
-  renderSources
+  renderDetail
 } from './views.js';
-import { readProgress, writeProgress, parseImport, downloadExport } from './store.js';
+import { readProgress, writeProgress, readTallies, writeTallies, parseImport, downloadExport } from './store.js';
 
 const state = {
   view: 'ledger',
@@ -24,12 +21,29 @@ const state = {
   spoiler: true,
   missable: false,
   earned: new Set(),
+  tallies: {},
   revealed: 0,
   demo: false
 };
 
 const params = new URLSearchParams(window.location.search);
 let model = null;
+let moreViews = null;
+let moreLoading = false;
+const MORE_VIEWS = new Set(['roadmap', 'watch', 'sources']);
+
+function loadMoreViews() {
+  if (moreViews || moreLoading) return;
+  moreLoading = true;
+  import('./views-more.js').then((module) => {
+    moreViews = module;
+    moreLoading = false;
+    if (MORE_VIEWS.has(state.view)) render();
+  }).catch((error) => {
+    moreLoading = false;
+    setHtml('panel', `<div class="empty"><h2 class="empty-title">The tab did not load</h2><p class="empty-copy">${String(error && error.message ? error.message : error)}</p></div>`);
+  });
+}
 
 function setStatus(text, bad = false) {
   const node = byId('io-status');
@@ -52,6 +66,7 @@ function render() {
   setHtml('chips-kind', rail.kindChips);
   setHtml('chips-grade', rail.gradeChips);
   setHtml('kind-line', rail.kindLine);
+  setText('switch-note', rail.spoilerNote);
   byId('spoiler').setAttribute('aria-checked', String(state.spoiler));
 
   const counts = {
@@ -70,15 +85,23 @@ function render() {
   const full = state.view !== 'ledger';
   document.body.className = `view-${state.view}${full ? ' mode-full' : ''}`;
 
-  setText('ledger-count', `${rows.length} of ${model.figures.total}`);
-  setText('head-active', activeLine(state));
+  setText('ledger-count', ledgerCount(model, rows.length));
+  setText('head-active', activeLine(model, state));
   setHtml('rows', renderLedgerRows(model, state, rows));
   setHtml('ledger-foot', ledgerFoot(model));
 
-  if (state.view === 'roadmap') setHtml('panel', renderRoadmap(model, state));
-  else if (state.view === 'watch') setHtml('panel', renderWatch(model, state));
-  else if (state.view === 'sources') setHtml('panel', renderSources(model));
-  else setHtml('panel', renderDetail(model, state, rows));
+  if (MORE_VIEWS.has(state.view)) {
+    if (!moreViews) {
+      setHtml('panel', '<div class="empty"><p class="empty-copy">Loading this tab from the local data files.</p></div>');
+      loadMoreViews();
+      return;
+    }
+    if (state.view === 'roadmap') setHtml('panel', moreViews.renderRoadmap(model, state));
+    else if (state.view === 'watch') setHtml('panel', moreViews.renderWatch(model, state));
+    else setHtml('panel', moreViews.renderSources(model));
+  } else {
+    setHtml('panel', renderDetail(model, state, rows));
+  }
 }
 
 function select(id) {
@@ -100,9 +123,26 @@ function toggle(id) {
   render();
 }
 
+function tally(id, delta) {
+  const trophy = model.byId.get(id);
+  if (!trophy || !trophy.tally) return;
+  const target = Math.max(0, Math.floor(Number(trophy.tally.target) || 0));
+  const current = Math.max(0, Math.min(target, Math.floor(Number(state.tallies[id]) || 0)));
+  const next = Math.max(0, Math.min(target, current + delta));
+  if (next === current) return;
+  state.tallies = { ...state.tallies, [id]: next };
+  if (!state.demo) {
+    const saved = writeTallies(state.tallies);
+    setStatus(saved ? `${trophy.name} count saved in this browser.` : 'This browser will not store counts.', !saved);
+  } else {
+    setStatus(`${trophy.name} count changed in the demo state, nothing written.`);
+  }
+  render();
+}
+
 function doExport() {
-  downloadExport(state.earned);
-  setStatus(`Exported ${state.earned.size} names as JSON.`);
+  downloadExport(state.earned, state.tallies);
+  setStatus(`Exported ${state.earned.size} names and ${Object.keys(state.tallies).length} tally counts as JSON.`);
 }
 
 async function doImport(file) {
@@ -125,9 +165,11 @@ async function doImport(file) {
       added += 1;
     }
   }
+  if (result.tallies) state.tallies = { ...state.tallies, ...result.tallies };
   if (!state.demo) {
     const saved = writeProgress(state.earned);
-    if (!saved) {
+    const countsSaved = result.tallies ? writeTallies(state.tallies) : true;
+    if (!saved || !countsSaved) {
       setStatus('Imported in memory, but this browser will not store progress.', true);
       render();
       return;
@@ -158,6 +200,7 @@ function wire() {
     const act = hit.dataset.act;
     if (act === 'select') select(Number(hit.dataset.id));
     else if (act === 'toggle') toggle(Number(hit.dataset.id));
+    else if (act === 'tally') tally(Number(hit.dataset.id), Number(hit.dataset.delta));
     else if (act === 'kind' || act === 'grade') {
       state[act] = hit.dataset.value;
       render();
@@ -175,6 +218,7 @@ function wire() {
       state.revealed = Number(hit.dataset.id);
       render();
     } else if (act === 'export') {
+      // The rail keeps its export id; the ledger's io-mini button reaches the same handler through data-act.
       doExport();
     } else if (act === 'import') {
       byId('import-file').click();
@@ -224,6 +268,7 @@ async function boot() {
   }
   if (!applied) {
     state.earned = new Set(readProgress(model.trophies));
+    state.tallies = readTallies(model.trophies);
     state.selected = model.trophies.length > 0 ? model.trophies[0].id : 0;
   }
   if (!model.byId.has(state.selected)) state.selected = model.trophies.length > 0 ? model.trophies[0].id : 0;

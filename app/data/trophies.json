@@ -16,7 +16,7 @@
       "steps": [
         { "text": "Earn all 54 remaining trophies; the platinum follows automatically.", "source": "psn" },
         { "text": "Use the in-game Progress menu after the credits to see which activity counters are still short.", "source": "psq" },
-        { "text": "Compare the trophy list with this ledger when the platinum does not appear, because one outstanding bronze blocks it.", "source": "gb" }
+        { "text": "Compare the trophy list with this ledger if the platinum does not appear, because a single outstanding bronze blocks it.", "source": "gb" }
       ],
       "sources": ["psn", "psq", "gb"]
     },
@@ -271,6 +271,7 @@
       "stage": 6,
       "hidden": false,
       "count": "9 activity types",
+      "tally": { "target": 9, "unit": "activity types", "step": 1 },
       "missable": false,
       "guide": "Try each of the nine activity types at least once. The list covers fishing, hunting, golf, a shooting range, pool, basketball, an arcade game, a race win and a stunt. You do not need to master any of them, only to start and finish one instance. Progress > Activities shows what is still missing, and most types appear naturally during the story.",
       "steps": [
@@ -289,6 +290,7 @@
       "stage": 6,
       "hidden": false,
       "count": "42 golds across 12 ranges",
+      "tally": { "target": 42, "unit": "golds", "step": 1 },
       "missable": false,
       "guide": "Take a gold medal in all 42 Shooting Range challenges. The challenges are spread across 12 ranges, so expect to travel between several locations rather than finish at one counter. Each challenge can have three tiers, and some only open after other conditions are met. Gold medals also raise your Focus level, which helps with Gunslinger. Check Progress > Activities > Shooting Ranges for the ones still short.",
       "steps": [
@@ -307,6 +309,7 @@
       "stage": 6,
       "hidden": false,
       "count": "14 locations",
+      "tally": { "target": 14, "unit": "locations", "step": 1 },
       "missable": false,
       "guide": "Win a Top Fun drone race at each of the 14 locations. One win per location is enough for the bronze, though the completion checklist wants all 42 drone races. Some races charge an entry fee, so keep cash available. Drones appear under Activities > Drones > Top Fun Drones once discovered.",
       "steps": [
@@ -326,6 +329,7 @@
       "stage": 6,
       "hidden": false,
       "count": "20 different races",
+      "tally": { "target": 20, "unit": "races", "step": 1 },
       "missable": false,
       "guide": "Win 20 different races. Repeating a favourite circuit does not move the counter, so treat this as a tour of the race locations. Many events let you hire a car, and the vehicle's rating matters if you bring your own. Progress > Activities > Racing lists what you have won. Keep an eye on classes so a single fast car does not limit you.",
       "steps": [
@@ -380,6 +384,7 @@
       "stage": 4,
       "hidden": true,
       "count": "5 jobs",
+      "tally": { "target": 5, "unit": "jobs", "step": 1 },
       "missable": false,
       "guide": "Finish Andy's five jobs as Lucia, starting in Chapter 3 when he texts an address in Belville. The order is Climbing the Cellerichain, Pay the Cellerica Fee, Peach!, Read the Label and Puff Puff Pass, and the last one awards the bronze. The line is Lucia-only, so switch characters if Jason is active. It stays available after the story, but a chapter turn can leave it half finished, so track the next job.",
       "steps": [
@@ -398,6 +403,7 @@
       "stage": 4,
       "hidden": true,
       "count": "7 shipwrecks",
+      "tally": { "target": 7, "unit": "shipwrecks", "step": 1 },
       "missable": false,
       "guide": "Complete Kenton's shipwreck line, which starts in Chapter 1 with seven wrecks to dive. Go to the purple chest markers, dive down and use the metal detector to dig up each treasure. Kenton stops calling after Chapter 1 and only contacts Jason again much later, so the set can sit unfinished for hours. Finish it when he returns and track it under Kenton's Treasures. The final job awards the bronze.",
       "steps": [
@@ -417,6 +423,7 @@
       "stage": 4,
       "hidden": true,
       "count": "5 jobs",
+      "tally": { "target": 5, "unit": "jobs", "step": 1 },
       "missable": false,
       "guide": "Run Billy's five jobs at the Thrillbilly Mudclub in Kelly County. The line opens after the Chapter 2 mission Coffee Break, and the fifth job, Hometown Heroes, awards the bronze. The mudclub is well off the main route, so it is easy to forget between chapters. Billy stays available after the credits, which gives you a second chance. Finish all five in one stretch if you can.",
       "steps": [
@@ -435,6 +442,7 @@
       "stage": 4,
       "hidden": false,
       "count": "8 strands",
+      "tally": { "target": 8, "unit": "strands", "step": 1 },
       "missable": false,
       "guide": "Finish eight qualifying stranger strands. Kirk, Kyle, Yago and Pilot Pete are confirmed to count, while lines such as Moses, Tyrone, Yasmani, Andy, Billy and Eddie do not. The remaining qualifying strands are still being confirmed, so watch the trophy counter as you add new ones. None of them are needed for 100 percent, and all stay open after the story. Start with the four confirmed names, then keep going until the counter reads eight.",
       "steps": [
@@ -454,6 +462,7 @@
       "stage": 4,
       "hidden": true,
       "count": "16 sports cars",
+      "tally": { "target": 16, "unit": "sports cars", "step": 1 },
       "missable": false,
       "guide": "Complete Randy's Wish List, which opens after the Chapter 3 mission Clonin' Keys, Makin' GS. He wants 16 sports cars delivered to his garage in west Vice City. Scan cars with WAiNK to check whether a model is on the list, and search the hotel driveways around Vice Beach and Ocean Beach for the rarer ones. Condition affects the payout but not the trophy. Finish the deliveries before the endgame so the line does not get buried.",
       "steps": [
@@ -491,6 +500,7 @@
       "stage": 5,
       "hidden": false,
       "count": "18 spots",
+      "tally": { "target": 18, "unit": "spots", "step": 1 },
       "missable": true,
       "guide": "Meditate at all 18 spots across Leonida. The counter sits under Progress > Collections > Exploration > Meditations, and a spot only counts once the closing zen animation has played. Meditating with Jason and Lucia together can count for both, and the last spot needs both characters after Coffee Break in Chapter 2. In Chapter 1, follow Lucia to the balcony the morning after Down to Earth and accept her meditation, because that offer disappears when the chapter ends. It is not confirmed whether the trophy needs that particular spot, so do not skip it.",
       "steps": [
@@ -510,6 +520,7 @@
       "stage": 4,
       "hidden": true,
       "count": "15 Target Decks",
+      "tally": { "target": 15, "unit": "Target Decks", "step": 1 },
       "missable": false,
       "guide": "Hunt the unique animal for Bret. His line opens after Coffee Break in Chapter 2, when he texts Jason and Veteran Hunted in Lummox County begins the strand. Work the purple Target Decks and bring the animals back as Jason. A clean one-shot pays more but is not required. The exact animal that triggers the bronze is still unconfirmed, so clear all 15 decks because the completion checklist needs them anyway.",
       "steps": [
@@ -547,6 +558,7 @@
       "stage": 5,
       "hidden": false,
       "count": "100 scans",
+      "tally": { "target": 100, "unit": "scans", "step": 5 },
       "missable": false,
       "guide": "Scan 100 WAiNK locations with the phone app. Hold Up on the d-pad and press the scan button when a landmark, curiosity, sculpture or No Flusher tag is in view. Any mix of the four types counts, so pick whatever is closest. Progress sits under Collections > WAiNK Locations. The 100 percent checklist also wants 100 scans, so this one overlaps with A Long Road.",
       "steps": [
@@ -602,6 +614,7 @@
       "stage": 6,
       "hidden": false,
       "count": "3 shops",
+      "tally": { "target": 3, "unit": "shops", "step": 1 },
       "missable": false,
       "guide": "Rob three shops in a row with your partner while the wanted level stays live. Go in with body armor, sticky bombs and healing items because a death or a bust resets the run. The three jewelry stores in north Vice City are close together and open after Yasmani's Jewelry Jobs in Chapter 3. The bronze can lag by about 30 seconds after the third robbery, so wait before assuming it failed. If it still has not appeared, rob a fourth shop.",
       "steps": [
@@ -621,6 +634,7 @@
       "stage": 5,
       "hidden": false,
       "count": "100 vehicles",
+      "tally": { "target": 100, "unit": "vehicles", "step": 5 },
       "missable": false,
       "guide": "Discover 100 different vehicles. A vehicle counts when you get inside it or scan it with WAiNK, so you do not need to own or drive each one. Stand beside a busy road and scan passing traffic to build the count quickly. Progress > Vehicles lists what you have found. The completion checklist wants 200 base models, so this bronze comes well before the 100 percent target.",
       "steps": [
@@ -640,6 +654,7 @@
       "stage": 6,
       "hidden": false,
       "count": "5 enemies",
+      "tally": { "target": 5, "unit": "enemies", "step": 1 },
       "missable": false,
       "guide": "Take down five enemies during one Combat Focus. Click both sticks while aiming to trigger it, then use an assault rifle on a tight group. Focus only lasts a few seconds, so fill the meter first by eating, drinking or washing at home, and use Adrenaline to extend it. Gang operation thugs count, while cops, soldiers and civilians may not. Pick a crowded gang site rather than a street fight.",
       "steps": [
@@ -713,6 +728,7 @@
       "stage": 6,
       "hidden": false,
       "count": "5 of 8 vaults",
+      "tally": { "target": 8, "unit": "vaults", "step": 1 },
       "missable": false,
       "guide": "Rob five bank vaults and escape each time. Vaults open with the optional Chapter 4 mission That's Where The Money Is, and following a security van leads you to an open vault. The haul is too heavy for one character, so pass a bag to your partner. Every vault gives four stars, so escape on a fast bike and then switch vehicles. Five of the eight vaults are enough here, but 100 percent wants all eight.",
       "steps": [
@@ -769,6 +785,7 @@
       "stage": 6,
       "hidden": false,
       "count": "9 gangs",
+      "tally": { "target": 9, "unit": "gangs", "step": 1 },
       "missable": false,
       "guide": "Rob one illegal operation belonging to each of the nine gangs. The operations are yellow map icons, and Progress > Gangs keeps the count. You only need one per gang for the bronze, though the completion checklist wants all 39. Pick a gang whose territory you already know and work through the list. The trophy tracks gangs, not the total number of robberies.",
       "steps": [
@@ -822,6 +839,7 @@
       "stage": 6,
       "hidden": true,
       "count": "3 valuables",
+      "tally": { "target": 3, "unit": "valuables", "step": 1 },
       "missable": false,
       "guide": "Hit the Kolt & Associates bowling alley, which is the Kingpin Bowling gang operation in Port Gellhorn. It is first marked by Hit Kingpin Bowling in Chapter 2. Take the luxury watch from the southeast office, the Gutterball Moreland 850 shotgun from the northeast table and the safe in the northeast hallway; bring sticky bombs for the safe. The bronze pops once you lose the police. You do not need all three valuables in one visit, but the robbery takes a long time to return, so clear it in one go if you can.",
       "steps": [
@@ -860,6 +878,7 @@
       "stage": 6,
       "hidden": true,
       "count": "500 actions",
+      "tally": { "target": 500, "unit": "actions", "step": 25 },
       "missable": false,
       "guide": "Perform 500 actions that change your Criminal Profile. Most players reach this without trying, so play normally and check the count if the bronze is late. Turn on Criminal Profile notifications in Settings > UI to see each change. Avoid pushing toward the Irredeemable profile because that state is permanent. The trophy follows the number of choices, not the kind of person you become.",
       "steps": [
@@ -966,6 +985,7 @@
       "stage": 5,
       "hidden": false,
       "count": "8 garages, about $160,000 total",
+      "tally": { "target": 8, "unit": "garages", "step": 1 },
       "missable": false,
       "guide": "Buy all eight garage properties from the Vice City Real Estate phone app. The app opens after Daily Driver in Chapter 2, and the eight garages cost about $160,000 in total. The four garages the story gives you do not count toward the trophy. Each property adds one parking spot, which also helps On the Spot. Buy the cheap ones first if cash is tight.",
       "steps": [
@@ -985,6 +1005,7 @@
       "stage": 5,
       "hidden": false,
       "count": "10 vehicles",
+      "tally": { "target": 10, "unit": "vehicles", "step": 1 },
       "missable": false,
       "guide": "Register 10 vehicles in the Scooter Bros app. Moses' Chapter 2 mission unlocks the app, and you take stolen cars to his Port Gellhorn garage to respray and register them. At first he only accepts cars without trackers; from Chapter 3 any Pay 'n' Spray can register tracked vehicles. You need free garage space and each registration costs money, so use cheap cars or bikes. Buy garages first if the app refuses a registration.",
       "steps": [

@@ -2,6 +2,7 @@
 // of that same shape. Nothing here throws when storage is missing or full.
 
 const KEY = 'leonida100/progress/v1';
+const TALLY_KEY = 'leonida100/tallies/v1';
 const VERSION = 1;
 const FILE_NAME = 'leonida-100-progress.json';
 
@@ -60,9 +61,75 @@ export function writeProgress(names) {
   }
 }
 
-/** The exported document: a version, the app name and every earned name. */
-export function buildExport(names) {
-  return { version: VERSION, app: 'leonida-100', earned: [...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)) };
+/** The target for every tally trophy, keyed by the trophy id as a string. */
+function tallyTargets(trophies) {
+  const targets = new Map();
+  for (const trophy of trophies) {
+    const target = Number(trophy && trophy.tally && trophy.tally.target);
+    if (Number.isFinite(target) && target > 0) targets.set(String(trophy.id), Math.floor(target));
+  }
+  return targets;
+}
+
+/** Keeps only known tally ids, whole numbers inside each target. */
+function normalizeTallies(value, trophies) {
+  const out = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return out;
+  for (const [id, target] of tallyTargets(trophies)) {
+    const count = Number(value[id]);
+    if (Number.isFinite(count)) out[id] = Math.max(0, Math.min(target, Math.floor(count)));
+  }
+  return out;
+}
+
+/** The stored tally counts, clamped to the current targets. */
+export function readTallies(trophies) {
+  const store = storage();
+  if (!store) return {};
+  let raw;
+  try {
+    raw = store.getItem(TALLY_KEY);
+  } catch {
+    return {};
+  }
+  if (!raw) return {};
+  try {
+    return normalizeTallies(JSON.parse(raw), trophies);
+  } catch {
+    return {};
+  }
+}
+
+/** Writes the tally counts under their own key; returns false when storage refuses. */
+export function writeTallies(tallies) {
+  const store = storage();
+  if (!store) return false;
+  const clean = {};
+  for (const [id, count] of Object.entries(tallies || {})) {
+    const value = Number(count);
+    if (Number.isFinite(value) && value >= 0) clean[id] = Math.floor(value);
+  }
+  try {
+    store.setItem(TALLY_KEY, JSON.stringify(clean));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The exported document: a version, the app name, every earned name and the tally counts. */
+export function buildExport(names, tallies = {}) {
+  const counts = {};
+  for (const [id, count] of Object.entries(tallies || {})) {
+    const value = Number(count);
+    if (Number.isFinite(value) && value >= 0) counts[id] = Math.floor(value);
+  }
+  return {
+    version: VERSION,
+    app: 'leonida-100',
+    earned: [...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+    tallies: counts
+  };
 }
 
 /**
@@ -87,12 +154,19 @@ export function parseImport(text, trophies) {
     if (known.has(name)) names.push(name);
     else unknown += 1;
   }
-  return { names, unknown };
+  let tallies = null;
+  if (Object.prototype.hasOwnProperty.call(value, 'tallies')) {
+    if (!value.tallies || typeof value.tallies !== 'object' || Array.isArray(value.tallies)) {
+      return { error: 'The tallies field is not an object.' };
+    }
+    tallies = normalizeTallies(value.tallies, trophies);
+  }
+  return { names, unknown, tallies };
 }
 
 /** Hands the export to the browser as a download; no network is involved. */
-export function downloadExport(names) {
-  const body = JSON.stringify(buildExport(names), null, 1);
+export function downloadExport(names, tallies) {
+  const body = JSON.stringify(buildExport(names, tallies), null, 1);
   const blob = new Blob([body], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -101,5 +175,6 @@ export function downloadExport(names) {
   document.body.append(link);
   link.click();
   link.remove();
+  // Revoking at once can cancel the download, so the object URL lives for one second.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

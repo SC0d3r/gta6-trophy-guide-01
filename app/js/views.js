@@ -12,13 +12,20 @@ const kindLabel = (kind) => KIND_LABEL[kind] || String(kind).toUpperCase();
 /** The audit strip: every figure on it is computed from the data files. */
 export function renderAudit(model) {
   const f = model.figures;
-  const main = `<span class="audit-run">${[`${f.total} OFFICIAL`, `${f.hidden} HIDDEN`, `${f.guides} OF ${f.total} GUIDES`].join(SEP)}</span>`;
-  const sub = `<span class="audit-run">${[
-    `${f.steps} STEPS`,
-    `${f.cited} CITED`,
-    `${f.sources} SOURCES`,
-    `READ ${esc(f.read.toUpperCase())}`
-  ].join(SEP)}</span>`;
+  const main = [
+    '<span class="audit-tag">AUDIT</span>',
+    `${f.official}/${f.total} OFFICIAL NAME, DESCRIPTION, GRADE`,
+    `${f.hidden} PSN-HIDDEN`,
+    `${f.cited}/${f.steps} STEPS CITED`,
+    `${f.guides2}/${f.total} GUIDES CITE 2+ SOURCES`
+  ].join(` ${SEP} `);
+  const sub = [
+    `${f.watch} WATCH FLAGS`,
+    `${f.watchMissable} POSSIBLY MISSABLE`,
+    `${f.watchRisk} AT RISK`,
+    `${f.sources} SOURCES READ ${esc(f.read.toUpperCase())}`,
+    'OFFLINE'
+  ].join(` ${SEP} `);
   return { main, sub };
 }
 
@@ -53,6 +60,7 @@ function chipRow(model, state, keys, group, afterAll = '') {
 export function renderRail(model, state, shown) {
   const total = model.figures.total;
   const earned = earnedIn(model.trophies, state.earned);
+  const masked = model.trophies.filter((trophy) => isShielded(trophy, state)).length;
   const tallies = ['platinum', 'gold', 'silver', 'bronze'].map((grade) => {
     const inGrade = model.trophies.filter((trophy) => trophy.grade === grade);
     return `<li class="tally"><span class="tally-label">${gradeLabel(grade)}</span><span class="tally-frac">${earnedIn(inGrade, state.earned)}/${inGrade.length}</span></li>`;
@@ -80,7 +88,9 @@ export function renderRail(model, state, shown) {
     gradeChips: chipRow(model, state, ['platinum', 'gold', 'silver', 'bronze'], 'grade'),
     kindLine,
     shown,
-    spoiler: state.spoiler
+    spoiler: state.spoiler,
+    spoilerNote: state.spoiler ? `${masked} story names hidden now` : 'all names shown',
+    masked
   };
 }
 
@@ -134,24 +144,50 @@ export function ledgerFoot(model) {
   ].join(` ${SEP} `);
 }
 
-export function activeLine(state) {
+export function activeLine(model, state) {
   const parts = [`KIND ${state.kind.toUpperCase()}`, `GRADE ${state.grade.toUpperCase()}`];
   if (state.missable) parts.push('MISSABLE');
   if (state.q.trim() !== '') parts.push(`SEARCH ${state.q.trim().toUpperCase()}`);
-  parts.push(state.spoiler ? 'SHIELD ON' : 'SHIELD OFF');
+  if (state.spoiler) {
+    const masked = model.trophies.filter((trophy) => isShielded(trophy, state)).length;
+    parts.push(`SHIELD ON, ${masked} MASKED`);
+  } else {
+    parts.push('SHIELD OFF');
+  }
   return parts.join(' \u00b7 ');
 }
 
-function sourceRow(model, id) {
+/** Every source the detail cites, in trophy.sources order, then any step source not listed. */
+function citationList(trophy) {
+  const list = [...trophy.sources];
+  for (const step of trophy.steps) {
+    if (step.source && !list.includes(step.source)) list.push(step.source);
+  }
+  return list;
+}
+
+function sourceRow(model, id, number, stepCount) {
   const source = model.sourceById.get(id);
-  if (!source) return `<div class="src-row"><span class="src-id">${esc(id)}</span><span>Cited source</span></div>`;
+  if (!source) {
+    return [
+      '<div class="src-row">',
+      `<span class="src-num">${number}</span>`,
+      `<span class="src-body"><span class="src-title">${esc(id)}</span></span>`,
+      '<span class="src-read">read date unknown</span>',
+      `<span class="src-count">${stepCount} ${stepCount === 1 ? 'step' : 'steps'}</span>`,
+      '</div>'
+    ].join('');
+  }
   return [
     '<div class="src-row">',
-    `<span class="src-id">${esc(source.id)}</span>`,
-    '<span>',
-    `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>`,
-    `<span class="src-pub">${esc(source.publisher)}</span>`,
-    '</span></div>'
+    `<span class="src-num">${number}</span>`,
+    '<span class="src-body">',
+    `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.publisher)}</a>`,
+    `<span class="src-title">${esc(source.title)}</span>`,
+    '</span>',
+    `<span class="src-read">${esc(source.read)}</span>`,
+    `<span class="src-count">${stepCount} ${stepCount === 1 ? 'step' : 'steps'}</span>`,
+    '</div>'
   ].join('');
 }
 
@@ -164,38 +200,131 @@ function guideId(trophy, fallback = 'gb') {
   return fallback;
 }
 
-function countSection(trophy) {
+/** Three one-line attributions for the header: the official facts, the target and our own route notes. */
+function factRows(model, trophy) {
+  const psn = model.sourceById.get('psn');
+  const psnp = model.sourceById.get('psnp');
+  const rows = [
+    `<p class="fact-row">Official name, description and grade <span class="src-chip">psn</span> ${esc(psn ? psn.publisher : 'psn')} PSN list</p>`
+  ];
+  if (trophy.tally) {
+    rows.push(`<p class="fact-row">Target <span class="src-chip">psnp</span> ${esc(String(trophy.tally.target))} ${esc(trophy.tally.unit)} on ${esc(psnp ? psnp.publisher : 'psnp')}</p>`);
+  }
+  rows.push('<p class="fact-row">Route notes <span class="src-chip">OURS</span> checked against the sources below, not yet played in the game</p>');
+  return `<div class="fact-rows">${rows.join('')}</div>`;
+}
+
+/** The tracker for a trophy whose target is counted, or the official count when it is not. */
+function countSection(model, state, trophy) {
+  if (trophy.tally) {
+    const target = Math.max(1, Math.floor(Number(trophy.tally.target) || 1));
+    const current = Math.max(0, Math.min(target, Math.floor(Number(state.tallies[trophy.id]) || 0)));
+    const togo = target - current;
+    const note = state.demo ? 'demo counts, nothing written' : 'saved in this browser';
+    return [
+      '<div class="section">',
+      `<h3 class="section-title">YOUR COUNT<span class="aside">${esc(trophy.count || trophy.tally.unit)}</span></h3>`,
+      '<div class="tally-track">',
+      `<button class="tally-btn" type="button" data-act="tally" data-id="${trophy.id}" data-delta="-1" aria-label="One fewer ${esc(trophy.tally.unit)}">-</button>`,
+      `<span class="tally-count">${current} / ${target} ${esc(trophy.tally.unit)}</span>`,
+      `<button class="tally-btn" type="button" data-act="tally" data-id="${trophy.id}" data-delta="1" aria-label="One more ${esc(trophy.tally.unit)}">+</button>`,
+      `<span class="tally-togo">${togo} to go</span>`,
+      `<span class="tally-note">${note}</span>`,
+      '</div>',
+      '</div>'
+    ].join('');
+  }
   const label = trophy.count ? esc(trophy.count) : 'Not yet confirmed';
   const note = trophy.count
     ? `exact target from the named guide <span class="src-chip">${esc(guideId(trophy, 'psnp'))}</span>`
     : `no number in the captured sources <span class="src-chip">${esc(trophy.sources[0] || 'gb')}</span>`;
   return [
     '<div class="section">',
-    '<h3 class="section-title">COUNTS</h3>',
+    '<h3 class="section-title">YOUR COUNT</h3>',
     `<div class="count-block"><span class="count-value">${label}</span><span class="count-note">${note}</span></div>`,
     '</div>'
   ].join('');
 }
 
-/** The one-line missable answer, with the named guide it was drawn from. */
-function missableSection(trophy, watch) {
+/** The last-chance callout for a watch trophy, or one quiet line for every other trophy. */
+function missableSection(trophy, watch, citations) {
   if (watch) {
+    const source = guideId(trophy, 'gb');
+    const number = citations.indexOf(source) + 1;
+    const heading = trophy.missable ? 'POSSIBLY MISSABLE, LAST CHANCE' : 'AT RISK, EASY TO MISS';
     return [
-      '<div class="section missable-section">',
-      '<h3 class="section-title">CAN IT BE MISSED?</h3>',
-      '<p class="missable-answer">MISSABLE WINDOW</p>',
+      '<div class="section last-chance">',
+      `<h3 class="last-chance-title">${heading}</h3>`,
       `<p class="missable-row"><span class="missable-key">WINDOW</span>${esc(watch.window)}</p>`,
       `<p class="missable-row"><span class="missable-key">WHY</span>${esc(watch.why)}</p>`,
-      `<p class="missable-row"><span class="missable-key">ACTION</span>${esc(watch.action)}</p>`,
-      `<p class="missable-source">flag built from the named guide beside the official description <span class="src-chip">${esc(guideId(trophy, 'gb'))}</span></p>`,
+      `<p class="missable-row"><span class="missable-key">PROTECT IT</span>${esc(watch.action)} <span class="src-chip">[${number}]</span></p>`,
       '</div>'
     ].join('');
   }
+  const source = citations.includes('psn') ? 'psn' : citations[0];
+  const number = citations.indexOf(source) + 1;
   return [
-    '<div class="section missable-section">',
-    '<h3 class="section-title">CAN IT BE MISSED?</h3>',
-    '<p class="missable-answer quiet">No missable window in the official description. <span class="src-chip">psn</span></p>',
-    '<p class="missable-source">Check the window before the chapter ends if a guide adds one later.</p>',
+    '<div class="section last-chance quiet">',
+    `<p class="missable-answer quiet">No missable window in the official description <span class="src-chip">[${number}]</span></p>`,
+    '</div>'
+  ].join('');
+}
+
+/** The numbered steps: every step ends in the citation number of its source. */
+function stepsSection(trophy, citations) {
+  const steps = trophy.steps.map((step, index) => {
+    const number = citations.indexOf(step.source) + 1;
+    return `<li class="step"><span class="step-n">${index + 1}.</span><span class="step-body">${esc(step.text)} <span class="src-chip">[${number}]</span></span></li>`;
+  }).join('');
+  const cited = trophy.steps.filter((step) => citations.includes(step.source)).length;
+  return [
+    '<div class="section">',
+    `<h3 class="section-title">HOW TO EARN IT<span class="aside">${trophy.steps.length} STEPS ${SEP} ${cited} CITED</span></h3>`,
+    `<ol class="steps">${steps}</ol>`,
+    '</div>'
+  ].join('');
+}
+
+/** The numbered rail: every source once, with its publisher link and this trophy's step count. */
+function sourcesSection(model, trophy, citations) {
+  const rows = citations.map((id, index) => {
+    const stepCount = trophy.steps.filter((step) => step.source === id).length;
+    return sourceRow(model, id, index + 1, stepCount);
+  }).join('');
+  return [
+    '<div class="section">',
+    '<h3 class="section-title">SOURCES FOR THIS TROPHY<span class="aside">EVERY STEP CITED</span></h3>',
+    `<div class="src-rows">${rows}</div>`,
+    '</div>'
+  ].join('');
+}
+
+/** The next four unearned trophies after this one in stage, then id order. */
+function nextUpSection(model, state, trophy) {
+  const order = [...model.trophies].sort((a, b) => a.stage - b.stage || a.id - b.id);
+  const position = order.findIndex((row) => row.id === trophy.id);
+  const unearned = order.filter((row) => !state.earned.has(row.name));
+  const after = unearned.filter((row) => order.findIndex((candidate) => candidate.id === row.id) > position);
+  const picks = after.concat(unearned.filter((row) => !after.includes(row))).slice(0, 4);
+  if (!picks.length) return '';
+  const rows = picks.map((row) => {
+    const watch = model.watchByTrophy.get(row.name);
+    const chip = watch
+      ? `<span class="next-chip${row.missable ? ' hot' : ''}">${row.missable ? 'MISSABLE' : 'AT RISK'}</span>`
+      : '';
+    const hidden = isShielded(row, state);
+    return [
+      `<button class="next-row" type="button" data-act="select" data-id="${row.id}">`,
+      `<span class="next-stage">STAGE ${row.stage}</span>`,
+      `<span class="next-name${hidden ? ' masked' : ''}">${hidden ? 'Hidden trophy' : esc(row.name)}</span>`,
+      chip,
+      '</button>'
+    ].join('');
+  }).join('');
+  return [
+    '<div class="section">',
+    `<h3 class="section-title">NEXT UP, ROADMAP ORDER<span class="aside">${picks.length} UNEARNED</span></h3>`,
+    `<div class="next-rows">${rows}</div>`,
     '</div>'
   ].join('');
 }
@@ -222,7 +351,8 @@ function blockedDetail(model, state, trophy) {
     '<p class="blocked-copy">The name, the description and the guide stay behind the shield. Tick the trophy off in the ledger, turn the shield off, or reveal this one trophy.</p>',
     `<button class="reveal" type="button" data-act="reveal" data-id="${trophy.id}">Reveal this trophy</button>`,
     '</div>',
-    countSection(trophy),
+    countSection(model, state, trophy),
+    nextUpSection(model, state, trophy),
     roadmapSection(model, trophy)
   ].join('');
 }
@@ -241,128 +371,21 @@ export function renderDetail(model, state, rows) {
   if (isShielded(trophy, state)) return blockedDetail(model, state, trophy);
 
   const earned = state.earned.has(trophy.name);
-  const cited = trophy.steps.filter((step) => model.sourceById.has(step.source)).length;
-  const steps = trophy.steps.map((step, index) =>
-    `<li class="step"><span class="step-n">${index + 1}.</span><span class="step-body">${esc(step.text)} <span class="src-chip">${esc(step.source)}</span></span></li>`
-  ).join('');
-  const sources = trophy.sources.map((id) => sourceRow(model, id)).join('');
+  const citations = citationList(trophy);
   const watch = model.watchByTrophy.get(trophy.name);
 
-  const parts = [
+  return [
     '<header class="trophy-head">',
     `<p class="eyebrow"><span class="say-grade">${gradeLabel(trophy.grade)}</span> ${SEP} ${kindLabel(trophy.kind)} ${SEP} STAGE ${trophy.stage}${earned ? ` ${SEP} EARNED` : ''}</p>`,
     `<h2 class="trophy-name">${esc(trophy.name)}</h2>`,
     `<p class="trophy-desc">${esc(trophy.description)}</p>`,
-    '<p class="fact-line">Official name, description and grade: <span class="src-chip">psn</span> Exophase PSN list</p>',
+    factRows(model, trophy),
     '</header>',
-    missableSection(trophy, watch),
-    '<div class="section">',
-    `<h3 class="section-title">HOW TO EARN IT<span class="aside">${trophy.steps.length} STEPS ${SEP} ${cited} CITED</span></h3>`,
-    `<ol class="steps">${steps}</ol>`,
-    '</div>',
-    '<div class="section">',
-    `<h3 class="section-title">SOURCES FOR THIS TROPHY<span class="aside">${trophy.sources.length} OF 7</span></h3>`,
-    `<div class="src-rows">${sources}</div>`,
-    '</div>'
-  ];
-
-  parts.push(countSection(trophy));
-  parts.push(roadmapSection(model, trophy));
-  return parts.join('');
-}
-
-/** The roadmap: seven stage cards, two columns, the platinum card last. */
-export function renderRoadmap(model, state) {
-  const cards = model.stages.map((stage) => {
-    const earned = earnedIn(stage.members, state.earned);
-    const width = percent(earned, stage.members.length);
-    const chips = stage.members.slice(0, 7).map((trophy) =>
-      `<span class="t-chip${state.earned.has(trophy.name) ? ' on' : ''}">${esc(trophy.name)}</span>`
-    ).join('');
-    const more = stage.members.length > 7
-      ? `<span class="t-chip more">+${stage.members.length - 7} more</span>`
-      : '';
-    return [
-      `<article class="stage-card${stage.n === 7 ? ' final' : ''}">`,
-      `<div class="card-top"><span class="card-n">${stage.n}</span><h3 class="card-title">${esc(stage.title)}</h3></div>`,
-      `<p class="card-window">${esc(stage.window)}</p>`,
-      `<p class="card-hours">${esc(stage.hours)}</p>`,
-      `<p class="card-goal">${esc(stage.goal)}</p>`,
-      '<div class="card-bar-row">',
-      `<span class="card-bar"><span style="width:${width}%"></span></span>`,
-      `<span class="card-bar-label">${earned} of ${stage.members.length} earned</span>`,
-      '</div>',
-      `<div class="card-chips">${chips}${more}</div>`,
-      '</article>'
-    ].join('');
-  }).join('');
-
-  return [
-    '<div class="view-head">',
-    '<h2 class="view-title">Roadmap to the platinum</h2>',
-    `<p class="view-note">${model.stages.length} STAGES ${SEP} ${model.figures.total} TROPHIES ${SEP} ${earnedIn(model.trophies, state.earned)} EARNED</p>`,
-    '</div>',
-    `<div class="stage-grid">${cards}</div>`
-  ].join('');
-}
-
-/** The watch list: ten rows joined to the trophy list by exact name. */
-export function renderWatch(model, state) {
-  const rows = model.watch.map((row) => {
-    const missable = Boolean(row.trophy && row.trophy.missable);
-    return [
-      '<tr>',
-      `<td class="cell-name">${esc(row.name)}</td>`,
-      `<td class="cell-status${missable ? ' hot' : ''}">${missable ? 'POSSIBLY MISSABLE' : 'AT RISK'}</td>`,
-      `<td class="cell-window">${esc(row.window)}</td>`,
-      `<td>${esc(row.why)}</td>`,
-      `<td>${esc(row.action)}</td>`,
-      `<td class="cell-source"><span class="src-chip">${esc(guideId(row.trophy || { sources: [] }, 'first'))}</span></td>`,
-      '</tr>'
-    ].join('');
-  }).join('');
-
-  return [
-    '<div class="view-head">',
-    '<h2 class="view-title">Missable trophies</h2>',
-    `<p class="view-note">${model.watch.length} FLAGS ${SEP} 1 POSSIBLY MISSABLE ${SEP} 9 AT RISK</p>`,
-    '</div>',
-    '<p class="view-lede">One of the ten is possibly missable and the other nine are easy to lose track of. The official descriptions mark no trophy as missable, so these are watch flags rather than confirmed misses.</p>',
-    '<table class="ledger-table">',
-    '<colgroup><col style="width:15.5%"><col style="width:11.5%"><col style="width:15%"><col style="width:24%"><col style="width:25%"><col style="width:9%"></colgroup>',
-    '<thead><tr><th>Trophy</th><th>Status</th><th>Window</th><th>Why it is easy to miss</th><th>What to do</th><th>Source</th></tr></thead>',
-    `<tbody>${rows}</tbody>`,
-    '</table>',
-    '<p class="view-foot">Status follows the missable flag in the trophy data. Names join the ledger by exact official spelling.</p>'
-  ].join('');
-}
-
-/** The sources: seven rows, each with the count of steps that cite it. */
-export function renderSources(model) {
-  const rows = model.sources.map((source) => {
-    const cited = model.figures.citations.get(source.id) || 0;
-    return [
-      '<tr>',
-      `<td><span class="cell-id">${esc(source.id)}</span><span class="cell-pub">${esc(source.publisher)}</span></td>`,
-      `<td>${esc(source.title)}</td>`,
-      `<td class="cell-support">${esc(source.supports)}</td>`,
-      `<td class="cell-window">${esc(source.read)}</td>`,
-      `<td class="cell-url"><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.url)}</a></td>`,
-      `<td class="cell-count">${cited} steps</td>`,
-      '</tr>'
-    ].join('');
-  }).join('');
-
-  return [
-    '<div class="view-head">',
-    '<h2 class="view-title">Sources</h2>',
-    `<p class="view-note">${model.sources.length} SOURCES ${SEP} ${model.figures.read.toUpperCase()}</p>`,
-    '</div>',
-    '<table class="ledger-table">',
-    '<colgroup><col style="width:12%"><col style="width:24%"><col style="width:24%"><col style="width:7%"><col style="width:24.5%"><col style="width:8.5%"></colgroup>',
-    '<thead><tr><th>Publisher</th><th>Title</th><th>What it supports</th><th>Read</th><th>URL</th><th>Cited by</th></tr></thead>',
-    `<tbody>${rows}</tbody>`,
-    '</table>',
-    '<p class="view-foot">The app fetches nothing. A link opens only when you follow it, and the count is the number of guide steps that cite that source.</p>'
+    countSection(model, state, trophy),
+    missableSection(trophy, watch, citations),
+    stepsSection(trophy, citations),
+    sourcesSection(model, trophy, citations),
+    nextUpSection(model, state, trophy),
+    roadmapSection(model, trophy)
   ].join('');
 }

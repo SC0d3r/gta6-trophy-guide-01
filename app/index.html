@@ -74,7 +74,7 @@
         <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
         <span class="switch-label">SPOILER SHIELD</span>
       </button>
-      <p class="switch-note">hides story names until earned</p>
+      <p class="switch-note" id="switch-note">hides story names until earned</p>
     </section>
 
     <footer class="rail-foot">
@@ -88,6 +88,8 @@
       <div class="head-line">
         <h2 class="head-title">THE LEDGER</h2>
         <span class="head-count" id="ledger-count"></span>
+        <button class="io-mini" type="button" data-act="export">EXPORT</button>
+        <button class="io-mini" type="button" data-act="import">IMPORT</button>
         <label class="search" for="search">
           <span class="search-label">SEARCH</span>
           <input class="search-input" type="search" id="search" placeholder="name or description" autocomplete="off" spellcheck="false">

@@ -18,7 +18,6 @@ export const EARNED_LEDGER = [
   'The Shootist',
   'Top Fun',
   'Earn Cash, Not Kudos',
-  'Positive Mental Attitude',
   "Don't Touch My Deck",
   'You WAiNKer!',
   'Whip It Good',
@@ -49,7 +48,9 @@ export const PRESETS = {
     query: '',
     select: 'Positive Mental Attitude',
     spoiler: true,
-    missable: false
+    missable: false,
+    // Preset tally keys are trophy ids: 28 is Positive Mental Attitude, started at 6 of 18 spots.
+    tallies: { 28: 6, 18: 5, 31: 40 }
   },
   collect: {
     earned: EARNED_COLLECT,
@@ -80,6 +81,16 @@ export const PRESETS = {
     select: 'Positive Mental Attitude',
     spoiler: false,
     missable: false
+  },
+  sources: {
+    earned: EARNED_LEDGER,
+    view: 'sources',
+    kind: 'all',
+    grade: 'all',
+    query: '',
+    select: 'Positive Mental Attitude',
+    spoiler: true,
+    missable: false
   }
 };
 
@@ -96,6 +107,7 @@ export function applyPreset(name, model, state) {
   state.q = preset.query;
   state.spoiler = preset.spoiler;
   state.missable = Boolean(preset.missable);
+  state.tallies = { ...(preset.tallies || {}) };
   const selected = model.byName.get(preset.select);
   state.selected = selected ? selected.id : model.trophies[0] ? model.trophies[0].id : 0;
   state.revealed = 0;

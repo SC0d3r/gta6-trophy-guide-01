@@ -43,6 +43,13 @@ export function buildModel(trophyDoc, roadmapDoc, sourceDoc, watchDoc, meta) {
     0
   );
   const guides = trophies.filter((trophy) => typeof trophy.guide === 'string' && trophy.guide.trim() !== '').length;
+  const guides2 = trophies.filter((trophy) => {
+    const citedSources = new Set([...trophy.sources, ...trophy.steps.map((step) => step.source)]);
+    return citedSources.size >= 2;
+  }).length;
+  const official = trophies.filter(
+    (trophy) => trophy.name && trophy.description && trophy.grade
+  ).length;
 
   const byKind = {};
   for (const kind of KIND_ORDER) byKind[kind] = trophies.filter((trophy) => trophy.kind === kind).length;
@@ -64,19 +71,26 @@ export function buildModel(trophyDoc, roadmapDoc, sourceDoc, watchDoc, meta) {
 
   const watch = (watchDoc.watch || []).map((row) => ({ ...row, trophy: byName.get(row.name) || null }));
   const watchByTrophy = new Map(watch.filter((row) => row.trophy).map((row) => [row.trophy.name, row]));
+  const watchMissable = watch.filter((row) => row.trophy && row.trophy.missable).length;
+  const watchRisk = watch.length - watchMissable;
 
   const readDates = [...new Set(sources.map((source) => source.read))];
   const figures = {
     total: trophies.length,
+    official,
     hidden: trophies.filter((trophy) => trophy.hidden).length,
     guides,
+    guides2,
     steps,
     cited,
     byKind,
     byGrade,
     citations,
     sources: sources.length,
-    read: readDates.join(' / ')
+    read: readDates.join(' / '),
+    watch: watch.length,
+    watchMissable,
+    watchRisk
   };
 
   return {
@@ -114,15 +128,8 @@ export function visibleTrophies(model, state) {
   });
 }
 
-/** The head line under the ledger title: what is on, in the order it narrows. */
-export function activeFilterSummary(model, state, shown) {
-  const parts = [`${shown} of ${model.trophies.length} shown`];
-  if (state.kind !== 'all') parts.push(KIND_LABEL[state.kind] || state.kind.toUpperCase());
-  if (state.grade !== 'all') parts.push((GRADE_LABEL[state.grade] || state.grade).toUpperCase());
-  if (state.q.trim() !== '') parts.push(`SEARCH "${state.q.trim()}"`);
-  if (state.spoiler) parts.push('SHIELD ON');
-  return parts.join('  \u00b7  ');
-}
+/** The ledger head count: rows in view then the full list, with no filter suffix. */
+export const ledgerCount = (model, visible) => `${visible} of ${model.trophies.length}`;
 
 /** The earned count for a set of trophies. */
 export const earnedIn = (trophies, earned) => trophies.filter((trophy) => earned.has(trophy.name)).length;
